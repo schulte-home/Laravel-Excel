@@ -35,6 +35,8 @@ class ChunkReader
         $chunkSize  = $import->chunkSize();
         $totalRows  = $reader->getTotalRows();
         $worksheets = $reader->getWorksheets($import);
+        $queue      = property_exists($import, 'queue') ? $import->queue : null;
+        $delayCleanup = property_exists($import, 'delayCleanup') ? $import->delayCleanup : 600;
 
         if ($import instanceof WithProgressBar) {
             $import->getConsoleOutput()->progressStart(array_sum($totalRows));
@@ -65,13 +67,25 @@ class ChunkReader
             }
         }
 
-        $jobs->push(new AfterImportJob($import, $reader));
 
+        $afterImportJob = new AfterImportJob($import, $reader);
+
+        if ($import instanceof ShouldQueueWithoutChain) {
+            $jobs->push($afterImportJob->delay($delayCleanup));
+
+            return $jobs->each(function ($job) use ($queue) {
+                dispatch($job->onQueue($queue));
+            });
+        }
+
+        
         if ($import instanceof ShouldQueue) {
             return new PendingDispatch(
                 (new QueueImport($import))->chain($jobs->toArray())
             );
         }
+        
+        $jobs->push($afterImportJob);
 
         $jobs->each(function ($job) {
             try {
