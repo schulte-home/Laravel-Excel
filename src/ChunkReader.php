@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\WithProgressBar;
 use Maatwebsite\Excel\Events\BeforeImport;
 use Maatwebsite\Excel\Files\TemporaryFile;
+use Maatwebsite\Excel\Concerns\ShouldQueueWithoutChain;
 use Maatwebsite\Excel\Imports\HeadingRowExtractor;
 use Maatwebsite\Excel\Jobs\AfterImportJob;
 use Maatwebsite\Excel\Jobs\QueueImport;
